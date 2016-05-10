@@ -1,6 +1,6 @@
 {
   "name": "greenhorn-autoreload",
-  "version": "1.0.2",
+  "version": "1.1.0",
   "description": "Auto-reload plugin for greenhorn",
   "main": "index.js",
   "dependencies": {
