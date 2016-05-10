@@ -1,0 +1,30 @@
+{
+  "name": "greenhorn-autoreload",
+  "version": "1.0.0",
+  "description": "Auto-reload plugin for greenhorn",
+  "main": "index.js",
+  "dependencies": {
+    "dnode": "^1.2.2",
+    "gaze": "^1.0.0",
+    "shoe": "^0.0.15",
+    "optimist": "^0.6.1"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/wankdanker/greenhorn-autoreload.git"
+  },
+  "keywords": [
+    "autoreload",
+    "websocket"
+  ],
+  "author": "Dan VerWeire",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/wankdanker/greenhorn-autoreload/issues"
+  },
+  "homepage": "https://github.com/wankdanker/greenhorn-autoreload#readme"
+}
