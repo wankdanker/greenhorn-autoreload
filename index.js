@@ -12,8 +12,6 @@ module.exports = function (app) {
   var clients = [];
 
   var sock = shoe(function (stream) {
-    debug('New Client');
-
     var d = dnode({
       register : function (cb) {
         debug('Client Registered.');
@@ -22,12 +20,14 @@ module.exports = function (app) {
     });
 
     clients.push(d);
+    debug('New Client. Clients: %s', clients.length);
 
     d.pipe(stream).pipe(d);
 
-    stream.on('end', function () {
+    stream.on('close', function () {
       clients.splice(clients.indexOf(d), 1);
-      debug('client ended.')
+
+      debug('Client ended. Clients: %s', clients.length);
     });
   });
 
@@ -37,8 +37,9 @@ module.exports = function (app) {
 
   gaze(watch, function (err, watcher) {
     debug('watching', watcher.watched())
-    watcher.on('all', function () {
-      debug('change event')
+    watcher.on('all', function (ev, filepath) {
+      debug('Change event: %s, %s', ev, filepath);
+
       clients.forEach(function (d) {
         d.callback();
       })
@@ -46,25 +47,31 @@ module.exports = function (app) {
   });
 
   app.use(function (req, res, next) {
-    //set path property which is required by autoreload
-    req.path = req.url.split('?')[0];
-    req.query = parse(req.url, true);
-    return next();
-  });
-
-  app.use(function (req, res, next) {
     var buffer = '';
+    var ending = false;
 
     //proxy res.write
     var _write = res.write;
     var _end = res.end;
     var _writeHead = res.writeHead;
 
-    var script = '<script type="text/javascript">' + clientjs + '</script>';
+    var script = '\n<script type="text/javascript">\n' + clientjs + '\n</script>\n';
 
-    res.writeHead = writeHead;
+    res.writeHead = function (statusCode, statusMessage, headers) {
+      debug('writeHead here');
+
+      headers = headers || {};
+
+      headers['content-length'] = (headers['content-length'] || buffer.length) + script.length;;
+
+      writeHead(statusCode, statusMessage, headers);
+    };
 
     res.end = function (val) {
+      debug('end here', typeof val);
+
+      ending = true;
+
       //if val is not a string then
       if (typeof val !== 'string') {
         return end(val);
@@ -76,17 +83,22 @@ module.exports = function (app) {
     }
 
     res.write = function (val) {
+      debug('write here', typeof val);
+
       //if val is not a string then
       if (typeof val !== 'string') {
         return write(val);
       }
+
+      debug('write here', val);
 
       buffer += val;
 
       //if val contains </head> then insert script into it
       var i = val.indexOf('</head>');
 
-      if (!~i) {
+      if (!~i && !ending) {
+
         // /head not found
         return write(val)
       }
@@ -99,18 +111,17 @@ module.exports = function (app) {
     };
 
     function write(val) {
+      debug('write2 here');
       _write.call(res, val);
     }
 
     function end(val) {
+      debug('end2 here');
       _end.call(res, val);
     }
 
     function writeHead(statusCode, statusMessage, headers) {
-      headers = headers || {};
-
-      headers['content-length'] = (headers['content-length'] || buffer.length) + script.length;
-
+      debug('writeHead2 here', arguments);
       _writeHead.call(res, statusCode, statusMessage || "", headers);
     }
 
